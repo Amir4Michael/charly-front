@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  overflow-x: clip;
+}
+
+@layer base {
+  :root {
+    --background: 210 25% 97%;
+    --foreground: 214 30% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 30% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 30% 16%;
+    --primary: 208 79% 28%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 25% 93%;
+    --secondary-foreground: 214 30% 20%;
+    --muted: 210 22% 94%;
+    --muted-foreground: 214 12% 45%;
+    --accent: 186 55% 92%;
+    --accent-foreground: 200 60% 22%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 45% 32%;
+    --border: 214 20% 88%;
+    --input: 214 20% 86%;
+    --ring: 208 79% 32%;
+    --radius: 0.5rem;
+    --sidebar-background: 214 33% 15%;
+    --sidebar-foreground: 210 20% 82%;
+    --sidebar-primary: 208 79% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 30% 22%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 214 25% 24%;
+    --sidebar-ring: 208 79% 45%;
+  }
+  .dark {
+    --background: 214 30% 10%;
+    --foreground: 210 20% 92%;
+    --card: 214 28% 13%;
+    --card-foreground: 210 20% 92%;
+    --popover: 214 28% 13%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 205 70% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 25% 20%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 214 25% 18%;
+    --muted-foreground: 214 12% 65%;
+    --accent: 214 25% 22%;
+    --accent-foreground: 210 20% 92%;
+    --destructive: 0 55% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 40% 45%;
+    --border: 214 22% 24%;
+    --input: 214 22% 26%;
+    --ring: 205 70% 48%;
+    --sidebar-background: 214 33% 12%;
+    --sidebar-foreground: 210 20% 82%;
+    --sidebar-primary: 205 70% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 30% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 214 25% 22%;
+    --sidebar-ring: 205 70% 45%;
+  }
+  * { border-color: hsl(var(--border)); }
+  body { @apply bg-background text-foreground; }
+}
+
+@layer components {
+  .app-card {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+  .field-label {
+    @apply block text-sm font-medium text-foreground mb-2;
+  }
+}
+
+/* ————— طباعة احترافية (Charly Group) ————— */
+@page {
+  size: A4;
+  margin: 12mm 10mm;
+}
+
+@media print {
+  html, body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* إخفاء كل عناصر الموقع (Sidebar, Header, أزرار, Toaster...) ولا يظهر إلا ورقة الطباعة نفسها */
+  .no-print,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .lg\:pr-64 { padding-right: 0 !important; }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    color: #111 !important;
+  }
+
+  .print-header { break-inside: avoid; page-break-inside: avoid; }
+  .print-footer { break-inside: avoid; page-break-inside: avoid; }
+  .print-logo, .print-logo-fallback { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* لا تُقطَّع الأقسام في منتصف الصفحة قدر الإمكان */
+  section, .print-block { break-inside: avoid; page-break-inside: avoid; }
+
+  /* الجداول: تكرار الرأس في كل صفحة إضافية، ومنع تقطيع الصفوف */
+  table { break-inside: auto; width: 100% !important; }
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+
+  h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+
+  a { color: inherit !important; text-decoration: none !important; }
+}
+
+/* خارج الطباعة: لا تأثير — تبقى هذه الأصناف شفافة تمامًا على شاشة الاستخدام العادي */
+.print-only { display: none; }
+@media print {
+  .print-only { display: block; }
+}

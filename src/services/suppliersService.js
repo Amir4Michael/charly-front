@@ -8,6 +8,8 @@ export const SUPPLIER_TYPE_LABELS = {
 
 export const listSuppliers = (type) => apiGet(`/suppliers/${type}`);
 
+export const getSupplier = (type, id) => apiGet(`/suppliers/${type}/${id}`);
+
 export const saveSupplier = (type, supplier) =>
   supplier.id ? apiPut(`/suppliers/${type}/${supplier.id}`, supplier) : apiPost(`/suppliers/${type}`, supplier);
 

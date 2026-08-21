@@ -5,6 +5,7 @@ import {
   Settings, Menu, X, LogOut, CalendarDays, ClipboardList, ClipboardCheck,
   Layers, Mountain, Truck, Users, Contact, Boxes, ShoppingCart, Receipt,
   Landmark, ShieldCheck, SlidersHorizontal, Users2, PackagePlus, Package,
+  UserCheck, Factory as FactoryIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -71,41 +72,48 @@ const NAV = [
 
 function SidebarContent({ onNavigate }) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
-        <span className="grid h-10 w-10 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+    <div className="flex h-full flex-col select-none">
+      {/* Header Info */}
+      <div className="flex items-center gap-3 border-b border-sidebar-border/60 px-5 py-5 bg-sidebar-accent/10">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/80 text-sidebar-primary-foreground font-black shadow-sm text-lg">
           ك
-        </span>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-white">نظام المصنع</p>
-          <p className="text-[11px] text-sidebar-foreground">{getSettings().factoryName}</p>
+        </div>
+        <div className="leading-tight overflow-hidden">
+          <p className="text-sm font-bold text-white tracking-wide truncate">نظام المصنع</p>
+          <p className="text-[11px] font-medium text-sidebar-foreground/70 truncate mt-0.5">{getSettings().factoryName}</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+
+      {/* Navigation List */}
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-sidebar-border">
         {NAV.map((item) => {
           const Icon = item.icon;
           if (item.children) {
             return (
-              <div key={item.label} className="pt-3">
-                <p className="px-3 pb-1 text-[11px] font-semibold text-sidebar-foreground/60">{item.label}</p>
-                {item.children.map((c) => (
-                  <NavLink
-                    key={c.to}
-                    to={c.to}
-                    onClick={onNavigate}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors',
-                        isActive
-                          ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white',
-                      )
-                    }
-                  >
-                    <c.icon className="h-4 w-4" strokeWidth={1.75} />
-                    {c.label}
-                  </NavLink>
-                ))}
+              <div key={item.label} className="pt-3.5 first:pt-0">
+                <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wider text-sidebar-foreground/50 uppercase">
+                  {item.label}
+                </p>
+                <div className="space-y-0.5">
+                  {item.children.map((c) => (
+                    <NavLink
+                      key={c.to}
+                      to={c.to}
+                      onClick={onNavigate}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200',
+                          isActive
+                            ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-xs font-bold translate-x-0.5'
+                            : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-white'
+                        )
+                      }
+                    >
+                      <c.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                      <span className="truncate">{c.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
               </div>
             );
           }
@@ -117,22 +125,26 @@ function SidebarContent({ onNavigate }) {
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors',
+                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200',
                   isActive
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white',
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-xs font-bold translate-x-0.5'
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/70 hover:text-white'
                 )
               }
             >
-              <Icon className="h-4 w-4" strokeWidth={1.75} />
-              {item.label}
+              <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <span className="truncate">{item.label}</span>
             </NavLink>
           );
         })}
       </nav>
-      <p className="border-t border-sidebar-border px-5 py-4 text-[11px] text-sidebar-foreground/60">
-        نظام إدارة وتشغيل المصنع
-      </p>
+
+      {/* Footer Branding */}
+      <div className="border-t border-sidebar-border/60 px-5 py-4 bg-sidebar-accent/5">
+        <p className="text-[11px] font-medium text-sidebar-foreground/50 text-center">
+          نظام إدارة وتشغيل المصنع
+        </p>
+      </div>
     </div>
   );
 }
@@ -142,26 +154,31 @@ export default function MainLayout() {
   const { signOut, session, isAdmin } = useAuth();
   const navigate = useNavigate();
 
+  const userName = session?.user?.name || 'مستخدم';
+  const firstLetter = userName.charAt(0);
+
   return (
-    <div className="min-h-screen bg-background">
-      <aside className="no-print fixed inset-y-0 right-0 z-40 hidden w-64 bg-sidebar lg:block">
+    <div className="min-h-screen bg-background font-sans antialiased">
+      {/* Desktop Sidebar */}
+      <aside className="no-print fixed inset-y-0 right-0 z-40 hidden w-64 border-l border-sidebar-border/40 bg-sidebar lg:block shadow-sm">
         <SidebarContent />
       </aside>
 
+      {/* Mobile Drawer Overlay & Sidebar */}
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
             aria-label="إغلاق القائمة"
             onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-foreground/50"
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
           />
-          <div className="absolute inset-y-0 right-0 w-72 bg-sidebar">
+          <div className="absolute inset-y-0 right-0 w-72 bg-sidebar shadow-2xl animate-in slide-in-from-right duration-200">
             <button
               type="button"
               onClick={() => setOpen(false)}
               aria-label="إغلاق"
-              className="absolute left-3 top-5 rounded p-1 text-sidebar-foreground hover:bg-sidebar-accent"
+              className="absolute left-3 top-4 rounded-xl p-2 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -170,9 +187,10 @@ export default function MainLayout() {
         </div>
       )}
 
-      <div className="lg:pr-64">
+      {/* Main Content Area */}
+      <div className="lg:pr-64 transition-all duration-300">
         <header
-          className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur no-print"
+          className="sticky top-0 z-30 border-b border-border/80 bg-card/85 backdrop-blur-md no-print shadow-2xs"
           style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
         >
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
@@ -181,40 +199,53 @@ export default function MainLayout() {
                 type="button"
                 onClick={() => setOpen(true)}
                 aria-label="فتح القائمة"
-                className="rounded-md border border-border p-2 lg:hidden"
+                className="rounded-xl border border-border/80 bg-card p-2.5 text-foreground hover:bg-secondary transition-colors lg:hidden active:scale-95"
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <Link to="/" className="text-sm font-semibold text-foreground sm:text-base">
-                {getSettings().factoryName}
+              <Link to="/" className="flex items-center gap-2 group">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-black lg:hidden">
+                  <FactoryIcon className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-black text-foreground sm:text-base group-hover:text-primary transition-colors">
+                  {getSettings().factoryName}
+                </span>
               </Link>
             </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={cn(
-                  'hidden rounded-full border px-2.5 py-1 text-xs font-medium sm:inline',
-                  isAdmin ? 'border-primary/30 bg-accent text-accent-foreground' : 'border-border bg-secondary text-muted-foreground',
-                )}
-              >
-                {session?.user?.name || 'مستخدم'}
-              </span>
+
+            <div className="flex items-center gap-2.5">
+              {/* User Avatar Badge */}
+              <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-secondary/50 p-1.5 pl-3">
+                <div className="h-7 w-7 rounded-lg bg-primary text-primary-foreground font-bold flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                  {firstLetter}
+                </div>
+                <div className="hidden sm:flex flex-col text-right">
+                  <span className="text-xs font-bold text-foreground leading-tight">{userName}</span>
+                  <span className="text-[10px] font-medium text-muted-foreground leading-tight">
+                    {isAdmin ? 'مدير النظام' : 'مستخدم'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Logout Button */}
               <button
                 type="button"
                 onClick={() => {
                   signOut();
                   navigate('/login');
                 }}
-                className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border/80 bg-card px-3 h-10 text-xs font-bold text-foreground hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all duration-200 active:scale-95"
               >
-                <LogOut className="h-4 w-4" />
-                خروج
+                <LogOut className="h-3.5 w-3.5" />
+                <span>خروج</span>
               </button>
             </div>
           </div>
         </header>
+
         <main
           className="mx-auto w-full max-w-[90rem] px-4 py-6 sm:px-6 sm:py-8"
-          style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+          style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))' }}
         >
           <Outlet />
         </main>

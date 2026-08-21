@@ -8,6 +8,6 @@
  * ملاحظة: لو الصورة غير موجودة حاليًا، هذا لا يكسر الطباعة أو الصفحة —
  * مكوّن PrintHeader يتعامل مع ذلك تلقائيًا عبر fallback نصي (انظر components/print/PrintLayout.jsx).
  */
-export const COMPANY_NAME = 'Charly Group';
-export const COMPANY_NAME_AR = 'مجموعة تشارلي';
+export const COMPANY_NAME = 'Sharly Group';
+export const COMPANY_NAME_AR = 'مجموعة شارلي';
 export const COMPANY_LOGO = '/images/charly-group-logo.png';

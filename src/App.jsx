@@ -18,6 +18,7 @@ const MaterialsPage = lazy(() => import('./pages/MaterialsPage'));
 const PeoplePage = lazy(() => import('./pages/PeoplePage'));
 const QuarriesPage = lazy(() => import('./pages/QuarriesPage'));
 const SuppliersPage = lazy(() => import('./pages/SuppliersPage'));
+const SupplierDetailPage = lazy(() => import('./pages/SupplierDetailPage'));
 const QuarryDetailPage = lazy(() => import('./pages/QuarryDetailPage'));
 const TrucksPage = lazy(() => import('./pages/TrucksPage'));
 const TruckDetailPage = lazy(() => import('./pages/TruckDetailPage'));
@@ -75,6 +76,7 @@ function AppRoutes() {
                     <Route path="/quarries" element={<QuarriesPage />} />
                     <Route path="/quarries/:id" element={<QuarryDetailPage />} />
                     <Route path="/suppliers/:type" element={<SuppliersPage />} />
+                    <Route path="/suppliers/:type/:id" element={<SupplierDetailPage />} />
                     <Route path="/trucks" element={<TrucksPage />} />
                     <Route path="/trucks/:id" element={<TruckDetailPage />} />
                     <Route path="/workers" element={<WorkersPage />} />

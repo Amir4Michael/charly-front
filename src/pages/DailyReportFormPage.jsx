@@ -13,10 +13,7 @@ import {
 } from '@/data/mockData';
 import { getMaterials } from '@/services/materialsService';
 import { addCrusher, getReport, listCrushers, listCustomers, saveReport } from '@/services/reportsService';
-import { findOrCreateQuarry } from '@/services/quarriesService';
-import { findOrCreateTruck } from '@/services/trucksService';
-import { findOrCreateCustomer } from '@/services/customersService';
-import { findOrCreateWorker, getWorkerByName } from '@/services/workersService';
+import { getWorkerByName } from '@/services/workersService';
 import { newId, todayISO, formatMoney, formatNumberAr } from '@/utils/reportUtils';
 
 const emptyReport = () => ({
@@ -175,97 +172,91 @@ export default function DailyReportFormPage() {
   };
 
   // الحفظ الفعلي — يُنفَّذ فقط بعد تأكيد المستخدم من نافذة التأكيد
+  //
+  // ملاحظة مهمة (سبب مشكلة "الحفظ يعلّق للأبد" التي تم إصلاحها هنا):
+  // كانت هذه الدالة تستدعي findOrCreateQuarry/Truck/Worker/Customer لكل عنصر (كسارة/قلاب/عامل/عميل)
+  // من الفرونت *قبل* الحفظ، لتحويل الاسم النصي إلى ID — بينما الـBackend (dailyReportService.prepareReportPayload)
+  // يقوم بنفس التحويل تلقائيًا من الاسم النصي مباشرة. أي أن نفس العملية كانت تُنفَّذ مرتين، مما يعني عشرات
+  // الطلبات الإضافية غير الضرورية قبل الحفظ الفعلي (أحد أسباب البطء)، وأهم من ذلك: هذه الاستدعاءات لم تكن
+  // محاطة بـtry/catch، فأي خطأ فيها (فشل شبكة، انتهاء الجلسة، تعارض إنشاء متزامن...) كان يوقف التنفيذ
+  // بصمت ويترك زر "حفظ" عالقًا في وضع Loading للأبد بدون أي رسالة خطأ للمستخدم.
+  // الحل: الفرونت يرسل الأسماء النصية كما هي، والـBackend هو المصدر الوحيد لحل الأسماء إلى IDs،
+  // مع لف كامل عملية الحفظ في try/catch/finally لضمان أن الـLoading يختفي دائمًا ويظهر خطأ واضح عند الفشل.
   const confirmSave = async () => {
+    if (saving) return; // منع الضغط المتكرر / التنفيذ المزدوج (لا ينشئ تقريرًا مكررًا)
     setConfirmSaveOpen(false);
     setSaving(true);
 
-    // ——— ربط البيانات بمعرّفات (IDs) قبل الحفظ ———
-    let quarryId = form.raw.quarryId || '';
-    if (form.raw.crusher?.trim()) {
-      quarryId = (await findOrCreateQuarry(form.raw.crusher.trim())).id;
-    }
-
-    const tippers = await Promise.all(
-      form.tippers
+    try {
+      const tippers = form.tippers
         .filter((t) => t.name?.trim())
-        .map(async (t) => {
-          const truckId = (await findOrCreateTruck(t.name.trim())).id;
+        .map((t) => {
           const total = (Number(t.weight) || 0) * (Number(t.rate) || 0);
           const paid = Number(t.paid) || 0;
-          return { ...t, truckId, total, paid, remaining: Math.max(total - paid, 0) };
-        }),
-    );
+          return { ...t, total, paid, remaining: Math.max(total - paid, 0) };
+        });
 
-    const operatingHours = form.operatingHours
-      .filter((h) => h.runStart || h.runEnd || h.stopHours)
-      .map((h) => ({ ...h, runHours: hoursBetween(h.runStart, h.runEnd) }));
+      const operatingHours = form.operatingHours
+        .filter((h) => h.runStart || h.runEnd || h.stopHours)
+        .map((h) => ({ ...h, runHours: hoursBetween(h.runStart, h.runEnd) }));
 
-    // ——— فرق التشغيل (مشغل + عمال) لكل وردية ———
-    const shiftTeams = await Promise.all(
-      form.shiftTeams.map(async (team) => ({
-        ...team,
-        workers: await Promise.all(
-          team.workers
+      // ——— فرق التشغيل (مشغل + عمال) لكل وردية ———
+      const shiftTeams = form.shiftTeams
+        .map((team) => ({
+          ...team,
+          workers: team.workers
             .filter((w) => w.name?.trim())
-            .map(async (w) => {
-              const workerId = (await findOrCreateWorker(w.name.trim())).id;
+            .map((w) => {
               const dailyAmount = Number(w.dailyAmount) || 0;
               const paid = Number(w.paid) || 0;
-              return { ...w, workerId, dailyAmount, paid, remaining: Math.max(dailyAmount - paid, 0) };
+              return { ...w, dailyAmount, paid, remaining: Math.max(dailyAmount - paid, 0) };
             }),
-        ),
-      })),
-    ).then((teams) => teams.filter((team) => team.operator?.trim() || team.workers.length > 0));
+        }))
+        .filter((team) => team.operator?.trim() || team.workers.length > 0);
 
-    // ——— حقول مجمّعة متوافقة مع الصفحات القديمة (الرئيسية، التقرير الأسبوعي...) ———
-    const operator = shiftTeams[0]?.operator || '';
-    const workersCount = shiftTeams.reduce((s, t) => s + (Number(t.workersCount) || t.workers.length || 0), 0);
-    const workers = shiftTeams.flatMap((t) => t.workers);
+      // ——— حقول مجمّعة متوافقة مع الصفحات القديمة (الرئيسية، التقرير الأسبوعي...) ———
+      const operator = shiftTeams[0]?.operator || '';
+      const workersCount = shiftTeams.reduce((s, t) => s + (Number(t.workersCount) || t.workers.length || 0), 0);
+      const workers = shiftTeams.flatMap((t) => t.workers);
 
-    const production = await Promise.all(
-      form.production
-        .filter((p) => p.fineness || p.customer)
-        .map(async (p) => ({
-          ...p,
-          customerId: p.customer?.trim() ? (await findOrCreateCustomer(p.customer.trim())).id : '',
-        })),
-    );
+      const production = form.production.filter((p) => p.fineness || p.customer);
 
-    const loadingList = await Promise.all(
-      form.loading
+      const loadingList = form.loading
         .filter((l) => l.fineness || l.customer)
-        .map(async (l) => {
-          const customerId = l.customer?.trim() ? (await findOrCreateCustomer(l.customer.trim())).id : '';
+        .map((l) => {
           const total = (Number(l.weight) || 0) * (Number(l.price) || 0);
           if (l.payment === 'نقدي') {
-            return { ...l, customerId, paid: total, remaining: 0 };
+            return { ...l, paid: total, remaining: 0 };
           }
           const paid = Number(l.paid) || 0;
-          return { ...l, customerId, paid, remaining: Math.max(total - paid, 0) };
-        }),
-    );
+          return { ...l, paid, remaining: Math.max(total - paid, 0) };
+        });
 
-    const expenses = form.expenses.filter((x) => x.type || x.amount || x.category);
+      const expenses = form.expenses.filter((x) => x.type || x.amount || x.category);
 
-    const payload = {
-      ...form,
-      managers: form.managers.filter(Boolean),
-      raw: { ...form.raw, quarryId },
-      tippers,
-      operatingHours,
-      shiftTeams,
-      operator,
-      workersCount,
-      workers,
-      production,
-      loading: loadingList,
-      expenses,
-    };
-    const saved = await saveReport(payload);
-    setSaving(false);
-    setSavedId(saved.id);
-    listCustomers().then(setCustomers); // تحديث قائمة العملاء فورًا لو تم إنشاء عميل جديد أثناء الحفظ
-    toast.success('تم حفظ التقرير اليومي بنجاح');
+      const payload = {
+        ...form,
+        managers: form.managers.filter(Boolean),
+        tippers,
+        operatingHours,
+        shiftTeams,
+        operator,
+        workersCount,
+        workers,
+        production,
+        loading: loadingList,
+        expenses,
+      };
+
+      const saved = await saveReport(payload);
+      setSavedId(saved.id);
+      listCustomers().then(setCustomers); // تحديث قائمة العملاء فورًا لو تم إنشاء عميل جديد أثناء الحفظ
+      toast.success('تم حفظ التقرير اليومي بنجاح');
+    } catch (err) {
+      toast.error(err.message || 'تعذّر حفظ التقرير اليومي، حاول مرة أخرى');
+    } finally {
+      setSaving(false); // يضمن اختفاء الـLoading دائمًا، سواء نجح الحفظ أو فشل
+    }
   };
 
   if (loading) return <LoadingState />;
@@ -762,6 +753,7 @@ export default function DailyReportFormPage() {
         confirmVariant="primary"
         onConfirm={confirmSave}
         onCancel={() => setConfirmSaveOpen(false)}
+        loading={saving}
       />
     </>
   );

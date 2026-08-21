@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -20,6 +20,7 @@ const emptyForm = () => ({ name: '', contactPerson: '', phone: '', address: '', 
  */
 export default function SuppliersPage() {
   const { type } = useParams();
+  const navigate = useNavigate();
   const meta = SUPPLIER_TYPE_LABELS[type];
 
   const [suppliers, setSuppliers] = useState([]);
@@ -75,7 +76,20 @@ export default function SuppliersPage() {
   }
 
   const columns = [
-    { key: 'name', header: 'اسم المورد', render: (s) => <span className="font-medium">{s.name}</span> },
+    {
+      key: 'name',
+      header: 'اسم المورد',
+      render: (s) => (
+        <button
+          type="button"
+          onClick={() => navigate(`/suppliers/${type}/${s.id}`)}
+          className="font-medium text-right hover:underline hover:text-primary"
+          title="عرض تفاصيل المورد"
+        >
+          {s.name}
+        </button>
+      ),
+    },
     { key: 'contactPerson', header: 'جهة الاتصال', render: (s) => s.contactPerson || '—' },
     { key: 'phone', header: 'الهاتف', render: (s) => s.phone || '—' },
     { key: 'address', header: 'العنوان', render: (s) => s.address || '—' },
